@@ -3,8 +3,13 @@ import random
 import math
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-import tensorflow as tf
 from .classify import Classifier, read_node_label
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+tf.reset_default_graph()
+import os
+os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 class _LINE(object):
@@ -13,16 +18,15 @@ class _LINE(object):
         self.cur_epoch = 0
         self.order = order
         self.g = graph
-        self.node_size = graph.G.number_of_nodes()
-        self.rep_size = rep_size
+        self.node_size = int(graph.G.number_of_nodes())
+        self.rep_size = int(rep_size)
         self.batch_size = batch_size
         self.negative_ratio = negative_ratio
 
         self.gen_sampling_table()
         self.sess = tf.Session()
         cur_seed = random.getrandbits(32)
-        initializer = tf.contrib.layers.xavier_initializer(
-            uniform=False, seed=cur_seed)
+        initializer = tf.keras.initializers.GlorotNormal(seed=cur_seed)
         with tf.variable_scope("model", reuse=None, initializer=initializer):
             self.build_graph()
         self.sess.run(tf.global_variables_initializer())
@@ -34,9 +38,9 @@ class _LINE(object):
 
         cur_seed = random.getrandbits(32)
         self.embeddings = tf.get_variable(name="embeddings"+str(self.order), shape=[
-                                          self.node_size, self.rep_size], initializer=tf.contrib.layers.xavier_initializer(uniform=False, seed=cur_seed))
+                                          self.node_size, self.rep_size], initializer=tf.keras.initializers.GlorotNormal(seed=cur_seed))
         self.context_embeddings = tf.get_variable(name="context_embeddings"+str(self.order), shape=[
-                                                  self.node_size, self.rep_size], initializer=tf.contrib.layers.xavier_initializer(uniform=False, seed=cur_seed))
+                                                  self.node_size, self.rep_size], initializer=tf.keras.initializers.GlorotNormal(seed=cur_seed))
         # self.h_e = tf.nn.l2_normalize(tf.nn.embedding_lookup(self.embeddings, self.h), 1)
         # self.t_e = tf.nn.l2_normalize(tf.nn.embedding_lookup(self.embeddings, self.t), 1)
         # self.t_e_context = tf.nn.l2_normalize(tf.nn.embedding_lookup(self.context_embeddings, self.t), 1)
