@@ -1,7 +1,12 @@
 from __future__ import print_function
 import numpy as np
-import tensorflow as tf
 import networkx as nx
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+tf.reset_default_graph()
+import os
+os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 __author__ = "Wang Binlu"
@@ -42,7 +47,7 @@ class GraphFactorization(object):
 
         mat_mask = 1.*(adj_mat > 0)
 
-        _embeddings = tf.Variable(tf.contrib.layers.xavier_initializer()([self.node_size, self.rep_size]),
+        _embeddings = tf.Variable(tf.keras.initializers.GlorotUniform()([self.node_size, self.rep_size]),
                                   dtype=tf.float32, name='embeddings')
 
         Adj = tf.placeholder(tf.float32, [self.node_size, self.node_size], name='adj_mat')
